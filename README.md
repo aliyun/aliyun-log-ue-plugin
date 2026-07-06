@@ -1,24 +1,26 @@
-# EasySls Guide
+# EasySls 使用说明
 
-EasySls is an Unreal plugin for sending game logs to Alibaba Cloud Log Service (SLS).
-This document covers installation, basic integration, persistence configuration, and the main public parameters.
+[English](README_EN.md)
 
-Typical use cases include:
+EasySls 用于将 Unreal 游戏中的日志数据发送到阿里云日志服务 SLS。
+本文档说明 EasySls 插件的安装方式、基础接入流程、断点续传配置以及主要参数含义。
 
-- Client runtime log collection
-- Gameplay and business event reporting
-- Error and exception log reporting
+适用场景包括：
 
-## Install The Plugin
+- 客户端运行日志采集
+- 业务埋点日志上报
+- 异常与错误日志上报
 
-EasySls is distributed as source code and does not include prebuilt binaries. When integrating it, compile the plugin source as part of an Unreal C++ project.
+## 安装插件
 
-First extract the plugin source package, then copy the `EasySls` folder into the `Plugins` directory of your UE project.
+EasySls 按源码形式分发，不包含预编译二进制。在接入插件时，需要在 Unreal C++ 项目中完成插件源码编译。
 
-The directory layout after copying should look like this:
+先解压插件源码包，再将 `EasySls` 目录拷贝到你的 UE 项目的 `Plugins` 目录中。
+
+拷贝后的目录结构示例如下：
 
 ```text
-<ProjectRoot>/
+<项目目录>/
 |-- Plugins/
 |   `-- EasySls/
 |       |-- EasySls.uplugin
@@ -28,36 +30,36 @@ The directory layout after copying should look like this:
 `-- Source/
 ```
 
-## Build And Enable
+## 编译与启用
 
-After copying the plugin, use either of the following ways to build and load it.
+插件拷贝完成后，可按以下两种方式任选其一完成编译与加载。
 
-1. Build and load through Unreal Editor (recommended)
+1. 通过 Unreal Editor 编译并加载（推荐）
 
-- Open the Unreal C++ project. If the editor prompts you to build the plugin or project modules, follow the prompt and start the build.
-- After the build completes, open `Edit -> Plugins`, search for `EasySls`, and make sure it is enabled. If the editor asks for a restart, restart it.
+    - 打开 Unreal C++ 项目，如编辑器提示需要编译插件或模块，按提示执行编译
+    - 编译完成后进入 `Edit -> Plugins`， 搜索 `EasySls` 并确认插件已启用。如提示重启编辑器，按提示重启
 
-2. Build from the command line, then load it in Unreal Editor
+2. 通过命令行编译，再进入编辑器加载
 
-- Build the project's editor target first, for example:
+    - 先编译项目对应的 Editor Target，例如：
 
-```bash
-<UE_PATH>/Engine/Build/BatchFiles/<Platform>/Build.* <ProjectEditorTarget> <Platform> Development <Project.uproject>
-```
+    ```bash
+    <UE_PATH>/Engine/Build/BatchFiles/<Platform>/Build.* <ProjectEditorTarget> <Platform> Development <Project.uproject>
+    ```
 
-- After the build completes, open Unreal Editor, go to `Edit -> Plugins`, search for `EasySls`, and make sure it is enabled. If the editor asks for a restart, restart it.
+    - 编译完成后打开 Unreal Editor，进入 `Edit -> Plugins`，搜索 `EasySls` 并确认插件已启用。如提示重启编辑器，按提示重启
 
-## Using The SLS Plugin
+## 使用 SLS 插件
 
-Integrate it with the following flow:
+按以下方式接入：
 
-- Initialize the global producer during startup
-- Call `AddLog` in gameplay or business code
-- Shut down the global producer during exit
+- 在启动阶段初始化全局 Producer 实例
+- 在业务代码中调用 `AddLog` 写入日志
+- 在退出阶段关闭全局 Producer 实例
 
-### Initialization
+### 初始化
 
-Use the following example to initialize the global producer. Typical entry points include `GameInstance::Init()`, a module startup function, or another global initialization path.
+以下示例用于初始化全局 Producer。示例代码可放在启动逻辑中，例如 `GameInstance::Init()`、模块启动函数或其他全局初始化入口。
 
 ```cpp
 #include "EasySls.h"
@@ -65,17 +67,18 @@ Use the following example to initialize the global producer. Typical entry point
 void FYourSystem::InitSls()
 {
     FSlsProducerConfig Config;
-    Config.Endpoint = TEXT("cn-hangzhou.log.aliyuncs.com"); // SLS endpoint
-    Config.Project = TEXT("your-project"); // SLS project name
-    Config.Logstore = TEXT("your-logstore"); // SLS logstore name
-    Config.AccessKeyId = TEXT("your-ak"); // Alibaba Cloud AccessKey ID
-    Config.AccessKeySecret = TEXT("your-sk"); // Alibaba Cloud AccessKey Secret
+    Config.Endpoint = TEXT("cn-hangzhou.log.aliyuncs.com"); // SLS 服务地址
+    Config.Project = TEXT("your-project"); // SLS Project 名称
+    Config.Logstore = TEXT("your-logstore"); // SLS Logstore 名称
+    Config.AccessKeyId = TEXT("your-ak"); // 阿里云访问凭证 ID
+    Config.AccessKeySecret = TEXT("your-sk"); // 阿里云访问凭证 Secret
 
-    FEasySlsModule::Get().InitGlobalProducer(Config); // Initialize the global producer
+    FEasySlsModule::Get().InitGlobalProducer(Config); // 初始化全局 Producer 实例
 }
 ```
 
-### Write Logs
+### 写日志
+
 
 ```cpp
 void FYourSystem::WriteSlsLog()
@@ -86,14 +89,14 @@ void FYourSystem::WriteSlsLog()
     Contents.Add(TEXT("player_id"), TEXT("10001"));
     Contents.Add(TEXT("map"), TEXT("lobby"));
 
-    const int32 UnixTime = 1712995200; // Unix timestamp in seconds
+    const int32 UnixTime = 1712995200; // 日志时间，Unix 时间戳，单位为秒
     FEasySlsModule::Get().AddLog(UnixTime, Contents);
 }
 ```
 
-### Shutdown
+### 关闭
 
-Call the following API during shutdown:
+在退出逻辑中调用以下接口关闭全局 Producer：
 
 ```cpp
 void FYourSystem::ShutdownSls()
@@ -102,9 +105,10 @@ void FYourSystem::ShutdownSls()
 }
 ```
 
-## Persistence
+## 断点续传
 
-To keep unsent logs during network issues or unexpected client shutdowns and recover them later, enable persistence during initialization as shown below.
+如需在网络波动、客户端异常退出等场景下保留未发送日志并在后续恢复发送，可按以下初始化方法，启用断点续传。
+
 
 ```cpp
 void FYourSystem::InitSlsWithPersistence()
@@ -116,62 +120,63 @@ void FYourSystem::InitSlsWithPersistence()
     Config.AccessKeyId = TEXT("your-ak");
     Config.AccessKeySecret = TEXT("your-sk");
 
-    Config.bEnablePersistence = true; // Enable persistence
-    Config.PersistenceDir = TEXT("Saved/SlsPersistence"); // Local directory for persisted logs
+    Config.bEnablePersistence = true; // 开启断点续传
+    Config.PersistenceDir = TEXT("Saved/SlsPersistence"); // 设置日志的本地保存目录
 
     FEasySlsModule::Get().InitGlobalProducer(Config);
 }
 ```
 
-Notes:
+说明：
 
-- `bEnablePersistence`: whether persistence is enabled
-- `PersistenceDir`: local directory for persisted log data, which must be readable and writable
+- `bEnablePersistence` 是否启用断点续传
+- `PersistenceDir` 断点续传日志的本地保存目录，必须要有可读写权限
 
-## Blueprint Integration
+## Blueprint 接入
 
-Blueprint projects can directly use the following APIs provided by the plugin:
+Blueprint 项目可直接使用插件提供的以下接口：
 
 - `InitGlobalProducer`
 - `AddLog`
 - `ShutdownGlobalProducer`
 
-The integration order is the same as in C++:
+接入顺序与 C++ 一致：
 
-1. Initialize on startup
-2. Write logs while running
-3. Shut down on exit
+1. 启动时初始化
+2. 运行过程中写入日志
+3. 退出时关闭
 
-## Parameter Reference
+## 参数说明
 
-The table below lists the main public configuration parameters.
+下表列出对外暴露的主要配置参数。
 
-| Parameter | Required | Description | Default / Notes |
+| 参数 | 是否必填 | 说明 | 默认值 / 备注 |
 | --- | --- | --- | --- |
-| `Endpoint` | Yes | SLS endpoint | For example `cn-hangzhou.log.aliyuncs.com` |
-| `Project` | Yes | SLS project name | No default |
-| `Logstore` | Yes | SLS logstore name | No default |
-| `AccessKeyId` | Yes | Alibaba Cloud AccessKey ID | No default |
-| `AccessKeySecret` | Yes | Alibaba Cloud AccessKey Secret | No default |
-| `SecurityToken` | No | STS security token | Empty by default; set when using STS credentials |
-| `Source` | No | Log source | Empty by default; commonly set to `clientIp` |
-| `Topic` | No | Log topic | Empty by default |
-| `Tags` | No | Log tags | Empty by default |
-| `bUsingHttps` | No | Whether to use HTTPS | Default `true` |
-| `CompressType` | No | Compression type | Default `Lz4` |
-| `bEnablePersistence` | No | Whether to enable persistence | Default `false` |
-| `PersistenceDir` | No | Local directory for persisted logs | Empty by default; required when persistence is enabled |
-| `MaxPersistentFileSize` | No | Maximum size of a single persisted file in bytes | Default `10485760` (10 MB) |
-| `MaxPersistentFileCount` | No | Maximum number of persisted files | Default `10` |
-| `MaxPersistenceTimeSec` | No | Maximum retention time for persisted files in seconds | Default `604800` (7 days) |
+| `Endpoint` | 是 | SLS 服务地址 | 例如 `cn-hangzhou.log.aliyuncs.com` |
+| `Project` | 是 | SLS Project 名称 | 无默认值 |
+| `Logstore` | 是 | SLS Logstore 名称 | 无默认值 |
+| `AccessKeyId` | 是 | 阿里云访问凭证 ID | 无默认值 |
+| `AccessKeySecret` | 是 | 阿里云访问凭证 Secret | 无默认值 |
+| `SecurityToken` | 否 | STS 安全令牌 | 默认空；使用 STS 鉴权时填写 |
+| `Source` | 否 | 日志来源 | 默认空；一般设置为 `clientIp` |
+| `Topic` | 否 | 日志主题 | 默认空 |
+| `Tags` | 否 | 日志标签 | 默认空 |
+| `bUsingHttps` | 否 | 是否使用 HTTPS | 默认 `true` |
+| `CompressType` | 否 | 压缩方式 | 默认 `Lz4` |
+| `bEnablePersistence` | 否 | 是否启用断点续传 | 默认 `false` |
+| `PersistenceDir` | 否 | 断点续传日志本地保存目录 | 默认空；启用断点续传时必填 |
+| `MaxPersistentFileSize` | 否 | 单个断点续传文件最大大小，单位：字节（Byte） | 默认 `10485760`（10 MB） |
+| `MaxPersistentFileCount` | 否 | 最大断点续传文件数量 | 默认 `10` |
+| `MaxPersistenceTimeSec` | 否 | 断点续传文件最大保留时间，单位：秒 | 默认 `604800`（7 天） |
 
-## Return Values
+## 返回值说明
 
-`AddLog` returns values from `ESlsResultCode`. Common return values include:
+`AddLog` 返回 `ESlsResultCode` 枚举值，常用返回值如下：
 
-- `ESlsResultCode::Ok`: the log was accepted by the producer
-- `ESlsResultCode::MemoryReachLimit`: the producer hit its memory limit and the log was dropped
-- `ESlsResultCode::ProducerNotExist`: the global producer has not been initialized
+- `ESlsResultCode::Ok`：日志成功进入 Producer
+- `ESlsResultCode::MemoryReachLimit`：当前 Producer 内存达到限制，日志被丢弃
+- `ESlsResultCode::ProducerNotExist`：全局 Producer 尚未初始化
 
-For the full definition, see:
+
+完整返回码定义见：
 [SlsConfig.h](Source/EasySls/Public/SlsConfig.h)

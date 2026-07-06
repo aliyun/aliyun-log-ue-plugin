@@ -1,0 +1,31 @@
+# Unreal build/runtime outputs
+/Binaries/
+/Intermediate/
+/Saved/
+/DerivedDataCache/
+
+# Packaged artifacts
+/dist/
+/release/
+/artifacts/
+*.zip
+*.tar.gz
+*.tgz
+*.sha256
+
+# Local editor and IDE state
+.DS_Store
+.vscode/
+.idea/
+.vs/
+*.xcworkspace/
+*.xcodeproj/
+*.sln
+*.suo
+*.user
+*.userprefs
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
